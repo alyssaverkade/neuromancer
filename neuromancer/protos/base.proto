@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package base;
+
+// using a proto3 map seems a little overblown
+message Map {
+  string key = 1;
+  string value = 2;
+  bytes checksum = 3;
+}
+
+message Reduction {
+  string key = 1;
+  repeated string values = 2;
+  bytes checksum = 3;
+}
+
+message Identifier {
+  // solving birthday collisions are a nonfeature
+  string uuid = 1;
+}
+
+message RunIdentifiers {
+  // the list of runs that this combination needs to obtain
+  repeated Identifier run_ids = 1;
+  bytes checksum = 2;
+}
+

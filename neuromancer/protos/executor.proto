@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+import "base.proto";
+
+package executor;
+
+message ExecutionCommand {
+  // the Identifier that the supervisor has mapped to a specific run instance
+  base.Identifier run_id = 1;
+  // the program to exec
+  bytes program = 2;
+  bytes checksum = 3;
+}
+
+message MapRequest {
+  ExecutionCommand command = 1;
+  repeated base.Map data = 2;
+  base.Identifier job = 3;
+  bytes checksum = 4;
+}
+
+message ReductionResult {
+  base.Identifier run_id = 1;
+  string output = 2;
+  bytes checksum = 3;
+}
+
+message RunProgression {
+  enum Status {
+    INCOMPLETE = 0;
+    FINISHED = 1;
+    FAILED = 2;
+  }
+  Status status = 1;
+  // should amount to time_requested_at->tv_sec - time_started_at->tv_sec
+  uint64 time_taken = 2;
+  bytes checksum = 3;
+}
+
+service Mapper {
+  rpc Run(MapRequest) returns (base.Identifier);
+  // We use a stream as a way of encoding that this can be backpressured,
+  // the job cannot progress until this request has finished.
+  // Will emit in the metadata the erasure codes for the `Map`s.
+  rpc Results(base.RunIdentifiers) returns (stream base.Map);
+}
+
+service Combiner {
+  rpc Run(base.RunIdentifiers) returns (base.Identifier);
+  // We use a stream as a way of encoding that this can be backpressured,
+  // the job cannot progress until this request has finished.
+  // Will emit in the metadata the erasure codes for the `Reduction`s.
+  rpc Results(base.RunIdentifiers) returns (stream base.Reduction);
+}
+
+service Reducer {
+  rpc Run(base.RunIdentifiers) returns (base.Identifier);
+  // We use a stream as a way of encoding that this can be backpressured,
+  // the job cannot progress until this request has finished.
+  // Will emit in the metadata the erasure codes for the `ReductionResult`.
+  rpc Results(base.Identifier) returns (ReductionResult);
+}
+
+service Health {
+  rpc Status(base.Identifier) returns (RunProgression);
+  rpc Cancel(base.Identifier) returns (RunProgression);
+}

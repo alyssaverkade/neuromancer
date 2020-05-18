@@ -1,0 +1,11 @@
+[workspace]
+members = [
+  # runs jobs
+  "executor",
+  # coordinates how jobs are run across executors
+  "supervisor",
+  # knows how jobs are distributed in the system
+  "librarian",
+  # shared code between implementations resides here
+  "neuromancer",
+]

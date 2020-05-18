@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "base.proto";
+
+package librarian;
+
+message RemapRequest {
+  base.Identifier new_parent = 1;
+  base.RunIdentifiers children = 2;
+}
+
+service Job {
+  rpc Identifiers(base.Identifier) returns (base.RunIdentifiers);
+  rpc Remap(RemapRequest) returns (base.Identifier);
+}

@@ -1,0 +1,21 @@
+[package]
+name = "neuromancer"
+version = "0.1.0"
+authors = ["Alyssa Verkade <alyssaverkade@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+snafu = "0.6"
+futures = "0.3"
+prost = "0.6"
+bytes = "0.5"
+tokio = "0.2"
+tonic = "0.2"
+wyhash = "0.3"
+lazy_static = "1.4"
+rand = "0.7"
+
+[build-dependencies]
+prost-build = "0.6"
+tonic-build = "0.2"
+
