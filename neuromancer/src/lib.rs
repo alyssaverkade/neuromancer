@@ -1,4 +1,4 @@
-use std::hash::Hasher;
+use std::hash::{BuildHasherDefault, Hasher};
 
 use lazy_static::lazy_static;
 use wyhash::WyHash;
@@ -30,10 +30,12 @@ pub trait Checksummable {
     fn checksum(&self) -> Result<u64>;
 }
 
-// abstraction that permits a trait to opt-in to checksumming by
-// converting the hashable fields into bytes
+pub type DefaultHasher = BuildHasherDefault<WyHash>;
+
+/// abstraction that permits a trait to opt-in to checksumming by
+/// trying to convert the hashable fields into a byte array
 pub trait Hashable {
-    // returns err for types that wrap a protobuf message
+    /// returns err for types that wrap a protobuf message
     fn bytes(&self) -> Result<Vec<u8>>;
 }
 
