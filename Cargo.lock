@@ -1003,6 +1003,16 @@ dependencies = [
 [[package]]
 name = "supervisor"
 version = "0.1.0"
+dependencies = [
+ "bytes",
+ "futures",
+ "neuromancer",
+ "parking_lot",
+ "prost",
+ "snafu",
+ "tonic",
+ "ulid",
+]
 
 [[package]]
 name = "syn"

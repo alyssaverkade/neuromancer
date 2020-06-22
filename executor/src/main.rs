@@ -4,7 +4,8 @@ use std::convert::identity;
 
 use hash_rings::maglev::Ring;
 use neuromancer::{
-    base::*, executor::administrative_server::*, executor::*, Checksummable, DefaultHasher,
+    base::*, errors::*, executor::administrative_server::*, executor::*, Checksummable,
+    DefaultHasher,
 };
 use tonic::{
     transport::server::{Router, Unimplemented},
@@ -62,4 +63,6 @@ impl Administrative for Executor {
     }
 }
 
-fn main() {}
+fn main() -> Result<()> {
+    Ok(())
+}
