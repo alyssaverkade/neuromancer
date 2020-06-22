@@ -1,5 +1,6 @@
 use std::hash::{BuildHasherDefault, Hasher};
 
+use bytes::Bytes;
 use lazy_static::lazy_static;
 use wyhash::WyHash;
 
@@ -36,7 +37,7 @@ pub type DefaultHasher = BuildHasherDefault<WyHash>;
 /// trying to convert the hashable fields into a byte array
 pub trait Hashable {
     /// returns err for types that wrap a protobuf message
-    fn bytes(&self) -> Result<Vec<u8>>;
+    fn bytes(&self) -> Result<Bytes>;
 }
 
 impl<T: Hashable> Checksummable for T {

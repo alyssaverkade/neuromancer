@@ -1,13 +1,13 @@
 use std::mem;
 
-use bytes::BufMut;
+use bytes::{BufMut, Bytes, BytesMut};
 use prost::Message;
 
 use super::{base, executor, Hashable};
 use crate::errors::*;
 
 trait EncodeIntoBuffer {
-    fn encode_into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()>;
+    fn encode_into_buffer(&self, buffer: &mut BytesMut) -> Result<()>;
 }
 
 // Vec<T>, Option<T>, and T blanket impls don't fully overlap, forcing us to use a marker trait
@@ -18,7 +18,7 @@ impl<T> EncodeIntoBuffer for T
 where
     T: NeuromancerMessage,
 {
-    fn encode_into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn encode_into_buffer(&self, buffer: &mut BytesMut) -> Result<()> {
         let mut result: Vec<u8> = Vec::with_capacity(mem::size_of_val(self));
         self.encode(&mut result).context(ProtobufEncodeError)?;
         buffer.extend_from_slice(&result);
@@ -30,7 +30,7 @@ impl<T> EncodeIntoBuffer for Option<T>
 where
     T: NeuromancerMessage,
 {
-    fn encode_into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
+    fn encode_into_buffer(&self, buffer: &mut BytesMut) -> Result<()> {
         let mut result: Vec<u8> = Vec::with_capacity(mem::size_of_val(self));
         match &self {
             Some(message) => message.encode(&mut result).context(ProtobufEncodeError)?,
@@ -45,11 +45,8 @@ impl<T> EncodeIntoBuffer for Vec<T>
 where
     T: NeuromancerMessage,
 {
-    fn encode_into_buffer(&self, buffer: &mut Vec<u8>) -> Result<()> {
-        // Don't know of a better way to get at the type contained by the vec.
-        // Basically amounts to size_of::<T>() due to current abi optimizations
-        // https://rust.godbolt.org/z/Wktz42
-        let mut result: Vec<u8> = Vec::with_capacity(mem::size_of_val(&self.first()));
+    fn encode_into_buffer(&self, buffer: &mut BytesMut) -> Result<()> {
+        let mut result = BytesMut::new();
         for message in self.iter() {
             message.encode(&mut result).context(ProtobufEncodeError)?;
             buffer.extend_from_slice(&result);
@@ -64,75 +61,64 @@ impl NeuromancerMessage for base::Map {}
 impl NeuromancerMessage for executor::ExecutionCommand {}
 
 impl Hashable for base::Map {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result = Vec::with_capacity(mem::size_of_val(self));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         result.extend_from_slice(self.key.as_bytes());
         result.extend_from_slice(self.value.as_bytes());
-        Ok(result)
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for base::Reduction {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
-        result.extend_from_slice(self.key.as_bytes());
-        let value_bytes = self.values.iter().fold(Vec::new(), |mut buf, string| {
-            buf.extend_from_slice(string.as_bytes());
-            buf
-        });
-        result.extend_from_slice(&value_bytes);
-        Ok(result)
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
+        result.extend(self.key.as_bytes());
+        result.extend(self.values.iter().flat_map(|s| s.as_bytes()));
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for base::RunIdentifiers {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         self.run_ids.encode_into_buffer(&mut result)?;
-        Ok(result)
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for executor::ExecutionCommand {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         self.run_id.encode_into_buffer(&mut result)?;
         result.extend_from_slice(&self.program);
-        Ok(result)
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for executor::MapRequest {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         self.command.encode_into_buffer(&mut result)?;
         self.data.encode_into_buffer(&mut result)?;
         self.job.encode_into_buffer(&mut result)?;
-        Ok(result)
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for executor::ReductionResult {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         self.run_id.encode_into_buffer(&mut result)?;
         result.extend_from_slice(self.output.as_bytes());
-        Ok(result)
+        Ok(result.freeze())
     }
 }
 
 impl Hashable for executor::RunProgression {
-    fn bytes(&self) -> Result<Vec<u8>> {
-        let mut result =
-            Vec::with_capacity(mem::size_of_val(self) - mem::size_of_val(&self.checksum));
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
         result.put_i32_le(self.status);
         result.put_u64_le(self.time_taken);
-
-        Ok(result)
+        Ok(result.freeze())
     }
 }
