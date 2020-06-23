@@ -2,7 +2,6 @@ use std::borrow::Cow;
 use std::collections::HashSet;
 use std::convert::identity;
 
-use hash_rings::maglev::Ring;
 use neuromancer::{
     base::*, errors::*, executor::administrative_server::*, executor::*, Checksummable,
     DefaultHasher,
@@ -20,7 +19,6 @@ struct KnownLibrarians {
     set: HashSet<String, DefaultHasher>,
     // the consistent hash ring used for looking up what librarians
     // job identifiers can be requested from and submitted
-    lookup: Ring<'static, &'static str>,
 }
 
 pub struct Server {
@@ -32,7 +30,6 @@ impl KnownLibrarians {
     fn new() -> Self {
         Self {
             set: HashSet::default(),
-            lookup: Ring::new(vec![]),
         }
     }
 
