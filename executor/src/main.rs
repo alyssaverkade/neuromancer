@@ -1,15 +1,16 @@
-use std::borrow::Cow;
+mod errors;
+
 use std::collections::HashSet;
-use std::convert::identity;
 
 use neuromancer::{
-    base::*, errors::*, executor::administrative_server::*, executor::*, Checksummable,
-    DefaultHasher,
+    base::*, executor::administrative_server::*, executor::*, Checksummable, DefaultHasher,
 };
 use tonic::{
     transport::server::{Router, Unimplemented},
     Request, Response, Status,
 };
+
+use errors::*;
 
 struct Executor {
     librarians: KnownLibrarians,
@@ -17,8 +18,6 @@ struct Executor {
 
 struct KnownLibrarians {
     set: HashSet<String, DefaultHasher>,
-    // the consistent hash ring used for looking up what librarians
-    // job identifiers can be requested from and submitted
 }
 
 pub struct Server {
