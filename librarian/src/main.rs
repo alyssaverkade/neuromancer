@@ -3,15 +3,15 @@ use std::collections::HashMap;
 use bytes::BufMut;
 use parking_lot::{RwLock, RwLockReadGuard};
 use tonic::{Request, Response, Status};
-use ulid::Ulid;
+use uuid::Uuid;
 
 mod errors;
 
 use errors::*;
 use neuromancer::{base::*, librarian::job_server::*, librarian::*, Checksummable};
 
-type Child = HashMap<Ulid, Vec<Ulid>>;
-type Parent = HashMap<Ulid, Option<Ulid>>;
+type Child = HashMap<Uuid, Vec<Uuid>>;
+type Parent = HashMap<Uuid, Option<Uuid>>;
 #[derive(Default)]
 /// A bit of a hashmap as a service
 ///
@@ -43,9 +43,9 @@ impl Job for Librarian {
 
         let child = self.child.read();
 
-        let ulid = self.validate_ulid(&request.uuid, &child)?;
+        let uuid = self.validate_uuid(&request.uuid, &child)?;
 
-        let identifiers: Vec<Identifier> = child[&ulid]
+        let identifiers: Vec<Identifier> = child[&uuid]
             .iter()
             .map(|uuid| Identifier {
                 uuid: uuid.to_string(),
@@ -69,28 +69,28 @@ impl Job for Librarian {
 }
 
 impl Librarian {
-    fn validate_ulid(&self, ulid: &str, child: &RwLockReadGuard<Child>) -> Result<Ulid, Status> {
-        if ulid.is_empty() {
+    fn validate_uuid(&self, uuid: &str, child: &RwLockReadGuard<Child>) -> Result<Uuid, Status> {
+        if uuid.is_empty() {
             return Err(Status::invalid_argument(
                 Error::NoIdentifierProvided.to_string(),
             ));
         }
-        let ulid = match Ulid::from_string(ulid) {
-            Ok(ulid) => ulid,
-            Err(err) => {
+        let uuid = match Uuid::parse_str(uuid) {
+            Ok(uuid) => uuid,
+            Err(source) => {
                 return Err(Status::invalid_argument(
-                    Error::UlidEncodingError { err }.to_string(),
-                ))
+                    Error::UuidEncodingError { source }.to_string(),
+                ));
             }
         };
         // assume hashing twice is less expensive than transforming the list of
         // identifiers to strings
-        if !child.contains_key(&ulid) {
+        if !child.contains_key(&uuid) {
             return Err(Status::not_found(
-                Error::IdentifierNotFound { ulid }.to_string(),
+                Error::IdentifierNotFound { uuid }.to_string(),
             ));
         }
-        Ok(ulid)
+        Ok(uuid)
     }
 
     // fn remap()

@@ -13,11 +13,10 @@ pub(crate) enum Error {
     InvalidLibrarianAddressSpecified { source: std::net::AddrParseError },
     #[snafu(display("grpc transport error: {}", source))]
     GRPCTransportError { source: tonic::transport::Error },
-    #[snafu(display("ulid encoding error: {}", err))]
-    // `ulid::EncodingError` doesn't implement `Error`
-    UlidEncodingError { err: ulid::EncodingError },
-    #[snafu(display("no identifiers were found for {}", ulid))]
-    IdentifierNotFound { ulid: ulid::Ulid },
+    #[snafu(display("uuid encoding error: {}", source))]
+    UuidEncodingError { source: uuid::Error },
+    #[snafu(display("no identifiers were found for {}", uuid))]
+    IdentifierNotFound { uuid: uuid::Uuid },
     #[snafu(display("no identifier provided"))]
     NoIdentifierProvided,
 }

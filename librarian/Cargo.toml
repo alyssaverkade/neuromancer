@@ -10,7 +10,7 @@ tonic = "0.2"
 prost = "0.6"
 futures = "0.3"
 snafu = "0.6"
-ulid = "0.3.1"
+uuid = "0.8.1"
 bytes = "0.5"
 parking_lot = "0.10"
 
