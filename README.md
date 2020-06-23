@@ -1,5 +1,7 @@
 # Neuromancer
 
+![Rust](https://github.com/alyssaverkade/neuromancer/workflows/Rust/badge.svg)
+
 A mapreduce implementation that serializes the map and reduce transforms as LLVM bitcode (eventually).
 
 
