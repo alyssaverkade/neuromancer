@@ -2,13 +2,13 @@ mod errors;
 mod executor;
 mod services;
 
-use errors::Result;
 use tonic::transport::server::{Router, Unimplemented};
 
 use neuromancer::executor::administrative_server::*;
 
 use crate::errors::*;
 use crate::executor::Executor;
+use errors::Result;
 
 pub struct Server {
     router: Router<AdministrativeServer<Executor>, Unimplemented>,

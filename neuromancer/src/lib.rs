@@ -6,6 +6,9 @@ use wyhash::WyHash;
 
 mod errors;
 
+#[cfg(target_os = "linux")]
+pub mod socket;
+
 // boilerplate for Hashable
 mod checksum_impls;
 
