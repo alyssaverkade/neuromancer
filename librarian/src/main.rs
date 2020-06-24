@@ -55,7 +55,7 @@ impl Job for Librarian {
         run_identifiers.run_ids = identifiers;
         let checksum = match run_identifiers.checksum() {
             Ok(checksum) => checksum,
-            Err(e) => return Err(Status::failed_precondition(e.to_string())),
+            Err(e) => return Err(Status::invalid_argument(e.to_string())),
         };
         run_identifiers.checksum.put_u64_le(checksum);
         Ok(Response::new(run_identifiers))
