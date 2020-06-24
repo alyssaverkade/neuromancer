@@ -1,6 +1,6 @@
 use snafu::Snafu;
 
-pub use snafu::{OptionExt, ResultExt};
+pub(crate) use snafu::{OptionExt, ResultExt};
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub(crate)")]
@@ -20,4 +20,4 @@ impl From<Error> for NeuromancerError {
     }
 }
 
-pub type Result<T, E = NeuromancerError> = std::result::Result<T, E>;
+pub(crate) type Result<T, E = NeuromancerError> = std::result::Result<T, E>;

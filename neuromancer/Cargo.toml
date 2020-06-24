@@ -10,7 +10,6 @@ snafu = "0.6"
 futures = "0.3"
 prost = "0.6"
 bytes = "0.5"
-tokio = "0.2"
 tonic = "0.2"
 wyhash = "0.3"
 lazy_static = "1.4"
@@ -21,3 +20,6 @@ prost-types = "0.6"
 prost-build = "0.6"
 tonic-build = "0.2"
 
+[dependencies.tokio]
+version = "0.2"
+features = ["full"]

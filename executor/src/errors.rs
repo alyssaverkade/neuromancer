@@ -6,9 +6,19 @@ pub use snafu::{OptionExt, ResultExt};
 #[snafu(visibility = "pub(crate)")]
 pub(crate) enum Error {
     #[snafu(display("{}", source))]
-    NeuromancerError {
+    Neuromancer {
         source: neuromancer::NeuromancerError,
     },
+    #[snafu(display("invalid address specified for server: {}", source))]
+    InvalidAddressForServer { source: std::net::AddrParseError },
+    #[snafu(display("grpc transport error: {}", source))]
+    GRPCTransport { source: tonic::transport::Error },
+    #[snafu(display(
+        "checksum mismatch for payload, computed: {} got: {}",
+        computed,
+        request
+    ))]
+    ChecksumMismatch { computed: u64, request: u64 },
 }
 
 #[derive(Debug, Snafu)]

@@ -1,64 +1,41 @@
 mod errors;
+mod executor;
+mod services;
 
-use std::collections::HashSet;
+use errors::Result;
+use tonic::transport::server::{Router, Unimplemented};
 
-use neuromancer::{
-    base::*, executor::administrative_server::*, executor::*, Checksummable, DefaultHasher,
-};
-use tonic::{
-    transport::server::{Router, Unimplemented},
-    Request, Response, Status,
-};
+use neuromancer::executor::administrative_server::*;
 
-use errors::*;
-
-struct Executor {
-    librarians: KnownLibrarians,
-}
-
-struct KnownLibrarians {
-    set: HashSet<String, DefaultHasher>,
-}
+use crate::errors::*;
+use crate::executor::Executor;
 
 pub struct Server {
     router: Router<AdministrativeServer<Executor>, Unimplemented>,
     addr: String,
 }
 
-impl KnownLibrarians {
-    fn new() -> Self {
-        Self {
-            set: HashSet::default(),
-        }
+impl Server {
+    const EXECUTOR_SERVER_ADDRESS: &'static str = "[::1]:9001";
+
+    pub fn new() -> Self {
+        let executor = Executor::default();
+        let router =
+            tonic::transport::Server::builder().add_service(AdministrativeServer::new(executor));
+        let addr = Self::EXECUTOR_SERVER_ADDRESS.to_string();
+        Self { router, addr }
     }
 
-    /// Insert
-    fn modify_membership(&mut self, librarians: &[&str]) {
-        let new_membership_list: HashSet<String, DefaultHasher> =
-            librarians.iter().map(|member| member.to_string()).collect();
-        if new_membership_list.is_superset(&self.set) {
-            // (new_membership_list.difference(&self.set), vec![])
-        } else {
-            for member in new_membership_list.symmetric_difference(&self.set) {
-                if self.set.contains(member) {
-                    // the member was removed
-                } else { // the member was added
-                }
-            }
-        }
+    pub async fn build(self) -> Result<()> {
+        self.router
+            .serve(self.addr.parse().context(InvalidAddressForServer)?)
+            .await
+            .context(GRPCTransport)?;
+        Ok(())
     }
 }
 
-#[tonic::async_trait]
-impl Administrative for Executor {
-    async fn librarian_membership_change(
-        &self,
-        request: Request<LibrarianMembershipChangeRequest>,
-    ) -> Result<Response<()>, Status> {
-        Ok(Response::new(()))
-    }
-}
-
-fn main() -> Result<()> {
-    Ok(())
+#[tokio::main]
+async fn main() -> Result<()> {
+    Server::new().build().await
 }

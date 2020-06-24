@@ -1,6 +1,6 @@
 use std::hash::{BuildHasherDefault, Hasher};
 
-use bytes::Bytes;
+use bytes::{Buf, Bytes, BytesMut};
 use lazy_static::lazy_static;
 use wyhash::WyHash;
 
@@ -45,5 +45,23 @@ impl<T: Hashable> Checksummable for T {
         let mut hasher = WyHash::with_seed(*HASH_SEED);
         hasher.write(&self.bytes()?);
         Ok(hasher.finish())
+    }
+}
+
+impl Hashable for String {
+    fn bytes(&self) -> Result<Bytes> {
+        Ok(self.as_bytes().to_bytes())
+    }
+}
+
+impl<T: Hashable> Hashable for Vec<T> {
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
+        for item in self.iter() {
+            if let Ok(bytes) = item.bytes() {
+                result.extend(bytes);
+            }
+        }
+        Ok(result.freeze())
     }
 }

@@ -97,7 +97,7 @@ impl Librarian {
 }
 
 impl Server {
-    const LIBRARIAN_SERVER_ADDRESS: &'static str = "[::1]:443";
+    const LIBRARIAN_SERVER_ADDRESS: &'static str = "[::1]:1337";
     pub fn new() -> Result<Self> {
         let librarian = Librarian::default();
         let router = tonic::transport::Server::builder().add_service(JobServer::new(librarian));

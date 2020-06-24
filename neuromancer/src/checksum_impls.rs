@@ -122,3 +122,11 @@ impl Hashable for executor::RunProgression {
         Ok(result.freeze())
     }
 }
+
+impl Hashable for executor::LibrarianMembershipChangeRequest {
+    fn bytes(&self) -> Result<Bytes> {
+        let mut result = BytesMut::new();
+        result.extend(self.librarians.iter().flat_map(|s| s.as_bytes()));
+        Ok(result.freeze())
+    }
+}
