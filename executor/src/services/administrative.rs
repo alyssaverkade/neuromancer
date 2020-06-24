@@ -39,11 +39,8 @@ impl Administrative for Executor {
 
         let backoff = Backoff::new();
         let mut librarians = loop {
-            // try to grab the lock
-            //
-            // because the lock can still be acquired by the other thread between the time
-            // we check for the lock being poisoned and the time we actually try to acquire it
-            // so that we don't emit futex(2) calls when we know we're contended
+            // try to grab the lock while trying to avoid excess futex(2) calls when we know we're
+            // contended
             //
             // this was written under the assumption that branch prediction would smooth things
             // out on the fast path while still maintaining correctness
@@ -64,12 +61,9 @@ impl Administrative for Executor {
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
-    use std::sync::Arc;
     use std::time::Duration;
 
     use futures::future::FutureExt;
-    use lazy_static::lazy_static;
     use tokio::sync::oneshot;
     use tokio::sync::oneshot::Receiver;
 
@@ -77,6 +71,8 @@ mod tests {
     use neuromancer::executor::administrative_client::AdministrativeClient;
 
     const CHECKSUM_MISMATCH_ADDRESS: &str = "[::1]:1337";
+    const DEFAULT_STARTUP_TIMEOUT: u64 = 1;
+    const LENGTH_MISMATCH_ADDRESS: &str = "[::1]:1336";
 
     async fn gen_server(addr: &'static str, rx: Receiver<()>) -> tokio::task::JoinHandle<()> {
         let executor = Executor::default();
@@ -90,10 +86,6 @@ mod tests {
         tokio::time::delay_for(Duration::from_millis(DEFAULT_STARTUP_TIMEOUT)).await;
         server
     }
-
-    const DEFAULT_STARTUP_TIMEOUT: u64 = 1;
-
-    const LENGTH_MISMATCH_ADDRESS: &str = "[::1]:1336";
 
     #[tokio::test]
     async fn returns_invalid_argument_on_checksum_mismatch() {
