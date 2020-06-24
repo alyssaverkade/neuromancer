@@ -1,11 +1,11 @@
 use std::convert::TryInto;
 
-use crossbeam::utils::Backoff;
-use neuromancer::{executor::administrative_server::*, executor::*, *};
+use crossbeam_utils::Backoff;
 use tonic::{Request, Response, Status};
 
 use crate::errors::*;
 use crate::executor::Executor;
+use neuromancer::{executor::administrative_server::*, executor::*, *};
 
 #[tonic::async_trait]
 impl Administrative for Executor {

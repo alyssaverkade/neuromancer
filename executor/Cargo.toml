@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Alyssa Verkade <alyssaverkade@gmail.com>"]
 license = "MIT"
 edition = "2018"
+include = ["src/**/*"]
 
 [dependencies]
 tonic = "0.2"
@@ -12,7 +13,7 @@ futures = "0.3"
 snafu = "0.6"
 uuid = "0.8.1"
 bytes = "0.5"
-crossbeam = "0.7"
+crossbeam-utils = "0.7"
 lazy_static = "1.4"
 parking_lot = "0.11"
 

@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use crossbeam::sync::ShardedLock;
+use crossbeam_utils::sync::ShardedLock;
 
 use neuromancer::DefaultHasher;
 
