@@ -1,9 +1,8 @@
 use tonic::{Request, Response, Status};
 use uuid::Uuid;
 
-use crate::librarian::Librarian;
-
 use crate::errors::*;
+use crate::librarian::Librarian;
 use neuromancer::{base::*, librarian::job_server::*, librarian::*, read_lock, Checksummable};
 
 #[tonic::async_trait]
@@ -30,13 +29,20 @@ impl Job for Librarian {
         };
 
         let graph = read_lock!(self.graph);
+        let neighbors = graph.neighbors(uuid);
 
-        let identifiers: Vec<Identifier> = graph
-            .neighbors(uuid)
-            .map(|uuid| Identifier {
+        // attempt to pre-determine the number of identifiers
+        let neighbor_len = {
+            let (first, last) = neighbors.size_hint();
+            first + last.unwrap_or(0)
+        };
+        let mut identifiers = Vec::with_capacity(neighbor_len);
+
+        for uuid in neighbors {
+            identifiers.push(Identifier {
                 uuid: uuid.to_string(),
-            })
-            .collect();
+            });
+        }
 
         let checksum = match identifiers.checksum() {
             Ok(checksum) => checksum.to_ne_bytes().to_vec(),
