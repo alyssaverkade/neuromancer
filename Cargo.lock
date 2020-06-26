@@ -442,11 +442,14 @@ name = "librarian"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "crossbeam-utils",
  "futures",
  "neuromancer",
  "parking_lot 0.11.0",
+ "petgraph",
  "prost",
  "snafu",
+ "tokio",
  "tonic",
  "uuid",
 ]
