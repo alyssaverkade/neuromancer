@@ -68,3 +68,35 @@ impl<T: Hashable> Hashable for Vec<T> {
         Ok(result.freeze())
     }
 }
+
+#[macro_export]
+macro_rules! read_lock {
+    ($lock:expr) => {{
+        let backoff = crossbeam_utils::Backoff::new();
+        loop {
+            if !$lock.is_poisoned() {
+                match $lock.read() {
+                    Err(_) => continue,
+                    Ok(lock) => break lock,
+                }
+            }
+            backoff.spin();
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! write_lock {
+    ($lock:expr) => {{
+        let backoff = crossbeam_utils::Backoff::new();
+        loop {
+            if !$lock.is_poisoned() {
+                match $lock.write() {
+                    Err(_) => continue,
+                    Ok(lock) => break lock,
+                }
+            }
+            backoff.spin();
+        }
+    }};
+}

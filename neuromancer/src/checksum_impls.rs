@@ -1,6 +1,6 @@
 use std::mem;
 
-use bytes::{BufMut, Bytes, BytesMut};
+use bytes::{Buf, BufMut, Bytes, BytesMut};
 use prost::Message;
 
 use super::{base, executor, Hashable};
@@ -128,5 +128,11 @@ impl Hashable for executor::LibrarianMembershipChangeRequest {
         let mut result = BytesMut::new();
         result.extend(self.librarians.iter().flat_map(|s| s.as_bytes()));
         Ok(result.freeze())
+    }
+}
+
+impl Hashable for base::Identifier {
+    fn bytes(&self) -> Result<Bytes> {
+        Ok(self.uuid.as_bytes().to_bytes())
     }
 }
