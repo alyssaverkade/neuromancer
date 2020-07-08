@@ -1,12 +1,15 @@
+use std::collections::BTreeMap;
 use std::collections::HashSet;
 
 use conhash::{ConsistentHash, Node};
 use crossbeam_utils::sync::ShardedLock;
 use smol_str::SmolStr;
+use uuid::Uuid;
 
-use neuromancer::DefaultHasher;
+use neuromancer::{read_lock, write_lock, DefaultHasher};
 
 pub(crate) struct Executor {
+    pub(crate) identifier_mappings: ShardedLock<BTreeMap<Librarian, Vec<Uuid>>>,
     pub(crate) librarians: ShardedLock<KnownLibrarians>,
 }
 
@@ -27,8 +30,46 @@ pub(crate) struct KnownLibrarians {
 impl Executor {
     pub(crate) fn new() -> Self {
         Self {
+            identifier_mappings: ShardedLock::new(BTreeMap::default()),
             librarians: ShardedLock::new(KnownLibrarians::new()),
         }
+    }
+
+    pub(crate) fn rebalance(&self, deleted: Vec<Librarian>) {
+        let unbalanced = self.unbalanced_identifiers(deleted);
+        if unbalanced.is_empty() {
+            return;
+        }
+        let mut identifier_mappings = write_lock!(self.identifier_mappings);
+        let librarians = read_lock!(self.librarians);
+        for uuid in unbalanced {
+            // should be infallible but I don't want to insert a needless
+            // panic
+            if let Some(librarian) = librarians.mapping_for(uuid) {
+                let entry = identifier_mappings
+                    .entry(librarian.clone())
+                    .or_insert_with(|| Vec::new());
+                entry.push(uuid);
+                // FIXME: at this point we need to call Librarian.remap(uuid)
+            }
+        }
+    }
+
+    /// Returns the list of uuids that are currently mapped on this executor to deleted
+    /// librarians
+    fn unbalanced_identifiers(&self, deleted: Vec<Librarian>) -> Vec<Uuid> {
+        let mut result = Vec::new();
+        let mut deleted = deleted;
+        let identifier_mappings = read_lock!(self.identifier_mappings);
+        for librarian in deleted.drain(..) {
+            let uuids = identifier_mappings.get(&librarian);
+            if uuids.is_none() {
+                continue;
+            }
+            let uuids = uuids.unwrap();
+            result.extend_from_slice(uuids);
+        }
+        result
     }
 }
 
@@ -39,6 +80,10 @@ impl KnownLibrarians {
             set: HashSet::default(),
             ring,
         }
+    }
+
+    fn mapping_for(&self, id: Uuid) -> Option<&Librarian> {
+        self.ring.get(id.as_bytes())
     }
 
     /// Accepts the new list of librarians and returns the librarians that were removed.
@@ -77,6 +122,18 @@ impl Librarian {
     pub fn new(s: impl AsRef<str>) -> Self {
         let address = SmolStr::new(s);
         Self { address }
+    }
+}
+
+impl Ord for Librarian {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.address.cmp(&other.address)
+    }
+}
+
+impl PartialOrd for Librarian {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 

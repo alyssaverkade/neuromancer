@@ -43,7 +43,8 @@ impl Administrative for Executor {
             .into_iter()
             .map(|s| s.to_librarian())
             .collect();
-        librarians.modify_membership(&new_librarians);
+        let removed = librarians.modify_membership(&new_librarians);
+        self.rebalance(removed);
         Ok(Response::new(()))
     }
 }
