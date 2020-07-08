@@ -57,6 +57,12 @@ impl Hashable for String {
     }
 }
 
+impl Hashable for smol_str::SmolStr {
+    fn bytes(&self) -> Result<Bytes> {
+        Ok(self.as_bytes().to_bytes())
+    }
+}
+
 impl<T: Hashable> Hashable for Vec<T> {
     fn bytes(&self) -> Result<Bytes> {
         let mut result = BytesMut::new();

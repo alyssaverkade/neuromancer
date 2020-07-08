@@ -102,6 +102,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "conhash"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99d6364d028778d0d98b6014fa5882da377cd10d3492b7734d266a428e9b1fca"
+dependencies = [
+ "log",
+ "md5",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,16 +139,19 @@ name = "executor"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "conhash",
  "crossbeam-utils",
  "futures",
  "lazy_static",
  "neuromancer",
  "parking_lot 0.11.0",
  "prost",
+ "smol_str",
  "snafu",
  "tokio",
  "tonic",
  "uuid",
+ "wyhash",
 ]
 
 [[package]]
@@ -493,6 +506,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "md5"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79c56d6a0b07f9e19282511c83fc5b086364cbae4ba8c7d5f190c3d9b0425a48"
+
+[[package]]
 name = "memchr"
 version = "2.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -590,10 +609,12 @@ dependencies = [
  "prost-build",
  "prost-types",
  "rand",
+ "smol_str",
  "snafu",
  "tokio",
  "tonic",
  "tonic-build",
+ "uuid",
  "wyhash",
 ]
 
@@ -927,6 +948,12 @@ name = "smallvec"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"
+
+[[package]]
+name = "smol_str"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f7909a1d8bc166a862124d84fdc11bda0ea4ed3157ccca662296919c2972db1"
 
 [[package]]
 name = "snafu"
