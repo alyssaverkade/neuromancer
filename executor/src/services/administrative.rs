@@ -1,11 +1,10 @@
 use std::convert::TryInto;
 
-use crossbeam_utils::Backoff;
 use tonic::{Request, Response, Status};
 
 use crate::errors::*;
-use crate::executor::Executor;
-use neuromancer::{executor::administrative_server::*, executor::*, *};
+use crate::executor::{Executor, Librarian, ToLibrarian};
+use neuromancer::{executor::administrative_server::*, executor::*, write_lock, *};
 
 #[tonic::async_trait]
 impl Administrative for Executor {
@@ -22,7 +21,7 @@ impl Administrative for Executor {
             ));
         }
 
-        let checksum = u64::from_be_bytes(request.checksum[..].try_into().unwrap());
+        let checksum = u64::from_ne_bytes(request.checksum[..].try_into().unwrap());
         match request.librarians.checksum() {
             Ok(computed) if computed != checksum => {
                 return Err(Status::invalid_argument(
@@ -37,24 +36,14 @@ impl Administrative for Executor {
             Ok(_) => (), // all is well
         }
 
-        let backoff = Backoff::new();
-        let mut librarians = loop {
-            // try to grab the lock while trying to avoid excess futex(2) calls when we know we're
-            // contended
-            //
-            // this was written under the assumption that branch prediction would smooth things
-            // out on the fast path while still maintaining correctness
-            if !self.librarians.is_poisoned() {
-                let librarians = self.librarians.write();
-                // lock acquired, yield the value and continue execution
-                if librarians.is_ok() {
-                    break librarians.unwrap();
-                }
-            }
-            backoff.spin();
-        };
+        let mut librarians = write_lock!(self.librarians);
 
-        librarians.modify_membership(&request.librarians);
+        let new_librarians: Vec<Librarian> = request
+            .librarians
+            .into_iter()
+            .map(|s| s.to_librarian())
+            .collect();
+        librarians.modify_membership(&new_librarians);
         Ok(Response::new(()))
     }
 }
@@ -75,7 +64,7 @@ mod tests {
     const LENGTH_MISMATCH_ADDRESS: &str = "[::1]:1336";
 
     async fn gen_server(addr: &'static str, rx: Receiver<()>) -> tokio::task::JoinHandle<()> {
-        let executor = Executor::default();
+        let executor = Executor::new();
         let server = tokio::spawn(async move {
             tonic::transport::Server::builder()
                 .add_service(AdministrativeServer::new(executor))

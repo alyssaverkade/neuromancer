@@ -19,7 +19,7 @@ impl Server {
     const EXECUTOR_SERVER_ADDRESS: &'static str = "[::1]:9001";
 
     pub fn new() -> Self {
-        let executor = Executor::default();
+        let executor = Executor::new();
         let router =
             tonic::transport::Server::builder().add_service(AdministrativeServer::new(executor));
         let addr = Self::EXECUTOR_SERVER_ADDRESS.to_string();

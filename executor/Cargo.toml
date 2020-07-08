@@ -16,6 +16,9 @@ bytes = "0.5"
 crossbeam-utils = "0.7"
 lazy_static = "1.4"
 parking_lot = "0.11"
+conhash = "0.4"
+smol_str = "0.1"
+wyhash = "0.3"
 
 [dependencies.neuromancer]
 path = "../neuromancer"
